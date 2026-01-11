@@ -31,23 +31,55 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 
 # Установить зависимости и выполнить миграции
 python -m pip install --upgrade pip
+```markdown
+# Voting App (Django)
+
+Приложение для голосования с использованием Docker и PostgreSQL.
+
+Запуск через Docker (рекомендуемый способ):
+
+```bash
+# В корне проекта
+docker-compose build
+docker-compose up -d
+# Выполнить миграции и создать суперпользователя
+docker-compose exec web python manage.py migrate
+docker-compose exec web python manage.py createsuperuser
+```
+
+Кратко про проект:
+- Django + Django REST Framework
+- Модели: `Poll`, `Option`, `Vote`
+- Абстрактная базовая модель с `created_at`/`updated_at`
+- Административная панель и экспорт в XLSX (openpyxl)
+
+Локальная установка (Windows PowerShell):
+
+```powershell
+# Создать и активировать виртуальное окружение
+python -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+.\.venv\Scripts\Activate.ps1
+
+# Установить зависимости и выполнить миграции
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py createsuperuser
 ```
 
-Или запустите `setup_venv.ps1` в корне проекта: 
+Также можно запустить скрипт `setup_venv.ps1` в корне проекта для автоматизации этих шагов:
 
 ```powershell
 ./setup_venv.ps1
 ```
 
-Docker notes (static & media):
+Docker: статические файлы и media
 
-- The `web` service runs `migrate` and `collectstatic` on start. Static files are collected to `staticfiles/` and served by WhiteNoise.
-- Media uploads are stored on the host in the `media/` folder (mounted into the container). Ensure `media/` exists and is writable.
+- Сервис `web` выполняет `migrate` и `collectstatic` при старте. Статические файлы собираются в `staticfiles/` и обслуживаются WhiteNoise.
+- Загружаемые media-файлы сохраняются на хосте в папке `media/` (смонтирована в контейнер). Убедитесь, что папка `media/` существует и доступна для записи.
 
-Start with Docker Compose:
+Запуск (повтор):
 
 ```bash
 docker-compose build
@@ -56,27 +88,28 @@ docker-compose exec web python manage.py migrate
 docker-compose exec web python manage.py createsuperuser
 ```
 
-After startup, open http://localhost:8000. Uploaded media will be available under `/media/`.
+Откройте в браузере http://localhost:8000. Загруженные media доступны по пути `/media/`.
 
-Demo data
----------
-To create demo users and polls run (inside container):
+Демo-данные
+-----------
+Чтобы создать демонстрационные учётные записи и примеры опросов, выполните (в контейнере):
 
 ```bash
 docker-compose exec web python manage.py createdemo
 ```
 
-Or locally in venv (ensure DB is reachable):
+Или локально в venv (если база данных доступна из окружения):
 
 ```powershell
-#.venv\Scripts\Activate.ps1
-#DB_HOST=localhost
+# Активировать .venv
 python manage.py createdemo
 ```
 
-Default demo credentials created by this command:
+Дефолтные демо‑учётные данные, создаваемые командой:
 
-- Admin: `admin` / `Secur3Pass!`
-- User: `user1` / `pass1234`
+- Админ: `admin` / `Secur3Pass!`
+- Пользователь: `user1` / `pass1234`
 
-Use these to log into the admin at `http://localhost:8000/admin` or to test registered-user voting.
+Эти учётные данные можно использовать для входа в админку: `http://localhost:8000/admin` и для тестирования голосования от зарегистрированного пользователя.
+
+```
