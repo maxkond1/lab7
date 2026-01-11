@@ -24,12 +24,13 @@ def export_xlsx(request):
     - table: 'poll'|'option'|'vote'
     - fields: comma separated names of fields to include
     """
-    if request.method == 'GET' and 'table' in request.GET:
+    # If a table is selected and fields param provided (comma-separated), perform export
+    if request.method == 'GET' and request.GET.get('action') == 'download':
         table = request.GET.get('table')
         fields = [f.strip() for f in request.GET.get('fields', '').split(',') if f.strip()]
         wb = openpyxl.Workbook()
         ws = wb.active
-        # Validate requested fields against model fields to avoid errors or data leakage
+        # Resolve model by table parameter
         if table == 'poll':
             from .models import Poll as Model
         elif table == 'option':
@@ -50,6 +51,17 @@ def export_xlsx(request):
         resp['Content-Disposition'] = 'attachment; filename=export.xlsx'
         wb.save(resp)
         return resp
-    else:
-        form = ExportForm(request.GET or None)
-        return render(request, 'admin/export_form.html', {'form': form})
+
+    # Render form with selectable fields for chosen table
+    table = request.GET.get('table')
+    allowed = []
+    if table:
+        if table == 'poll':
+            from .models import Poll as Model
+        elif table == 'option':
+            from .models import Option as Model
+        else:
+            from .models import Vote as Model
+        allowed = [f.name for f in Model._meta.fields]
+    form = ExportForm(request.GET or None)
+    return render(request, 'admin/export_form.html', {'form': form, 'allowed': allowed, 'selected_table': table})

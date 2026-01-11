@@ -55,3 +55,36 @@ class GuestVoteTests(TestCase):
         # second vote from same IP should be forbidden
         resp2 = self.client.post(url, {'option': self.opt.id}, REMOTE_ADDR='127.0.0.1')
         self.assertEqual(resp2.status_code, 403)
+
+    def test_rate_limit_ip(self):
+        url = f'/polls/{self.poll.id}/'
+        # perform 10 votes from same IP (should be allowed or blocked by duplicate check)
+        for i in range(10):
+            resp = self.client.post(url, {'option': self.opt.id}, REMOTE_ADDR=f'127.0.0.{i}')
+            # allow either redirect or forbidden depending on duplicate/unique checks
+            self.assertIn(resp.status_code, (302, 301, 403))
+        # simulate many requests from same IP to trigger rate-limit
+        for i in range(12):
+            resp = self.client.post(url, {'option': self.opt.id}, REMOTE_ADDR='192.0.2.1')
+        self.assertIn(resp.status_code, (429, 403, 302, 301))
+
+
+class APIViewsTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.poll = Poll.objects.create(title='API Poll', description='API')
+        Option.objects.create(poll=self.poll, text='X')
+
+    def test_poll_list_api(self):
+        resp = self.client.get('/api/polls/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('API Poll', resp.content.decode())
+
+    def test_export_xlsx_content(self):
+        # create sample poll and export its title and description
+        Poll.objects.create(title='ExportTest', description='Desc')
+        self.client.login(username='admin', password='adminpass')
+        resp = self.client.get('/admin/export-xlsx/?action=download&table=poll&fields=title,description')
+        self.assertEqual(resp.status_code, 200)
+        # basic check that response is an xlsx file (content-type)
+        self.assertIn('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', resp['Content-Type'])

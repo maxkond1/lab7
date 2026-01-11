@@ -2,7 +2,23 @@
 {% block content %}
   <h1>Export to XLSX</h1>
   <form method="get">
-    {{ form.as_p }}
-    <button type="submit" class="default">Export</button>
+    <div class="mb-2">{{ form.table.label_tag }} {{ form.table }}</div>
+    {% if selected_table %}
+      <h5>Choose fields to include:</h5>
+      <div class="mb-2">
+        {% for f in allowed %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="fields" value="{{ f }}" id="field_{{ f }}">
+            <label class="form-check-label" for="field_{{ f }}">{{ f }}</label>
+          </div>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="table" value="{{ selected_table }}">
+      <input type="hidden" name="action" value="download">
+      <button type="submit" class="btn btn-primary">Download XLSX</button>
+    {% else %}
+      <p>Select a table and press Show to choose fields.</p>
+      <button name="show" value="1" class="btn btn-secondary" type="submit">Show</button>
+    {% endif %}
   </form>
 {% endblock %}

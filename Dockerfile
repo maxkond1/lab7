@@ -5,4 +5,7 @@ WORKDIR /code
 COPY requirements.txt /code/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . /code/
-CMD ["gunicorn", "polls_proj.wsgi:application", "--bind", "0.0.0.0:8000"]
+COPY scripts/wait_for_db.sh /code/scripts/wait_for_db.sh
+COPY scripts/entrypoint.sh /code/scripts/entrypoint.sh
+RUN chmod +x /code/scripts/wait_for_db.sh /code/scripts/entrypoint.sh
+ENTRYPOINT ["/code/scripts/entrypoint.sh"]

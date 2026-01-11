@@ -6,6 +6,8 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.urls import reverse
 from django.db import IntegrityError
 from django.http import HttpResponseForbidden
+from django.core.cache import cache
+from django.http import HttpResponse
 
 class PollListView(generic.ListView):
     model = Poll
@@ -36,6 +38,13 @@ class PollDetailView(generic.DetailView):
         if user is None:
             if ip and Vote.objects.filter(option__poll=self.object, ip_address=ip).exists():
                 return HttpResponseForbidden('Guest already voted from this IP')
+        # Rate-limit: allow at most 10 votes per IP per minute (prevents flooding)
+        if ip:
+            key = f"votes_ip_{ip}"
+            count = cache.get(key, 0)
+            if count >= 10:
+                return HttpResponse('Too many requests', status=429)
+            cache.set(key, count + 1, timeout=60)
         try:
             Vote.objects.create(user=user, option=option, ip_address=ip)
         except IntegrityError:
