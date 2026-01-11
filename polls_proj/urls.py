@@ -6,8 +6,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('admin/export-xlsx/', export_xlsx, name='admin_export_xlsx'),
+    path('admin/', admin.site.urls),
     path('', voting_views.PollListView.as_view(), name='poll_list'),
     path('polls/', include('voting.urls')),
     path('api/', include('voting.api_urls')),
