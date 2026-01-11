@@ -7,12 +7,18 @@
     <button class="btn btn-outline-secondary" type="submit">Search</button>
   </div>
 </form>
-<div class="list-group">
+<div class="row g-3">
   {% for poll in polls %}
-    <a href="/polls/{{ poll.id }}/" class="list-group-item list-group-item-action">
-      <h5>{{ poll.title }}</h5>
-      <small>Updated: {{ poll.updated_at }}</small>
-    </a>
+    <div class="col-12 col-md-6">
+      <a href="/polls/{{ poll.id }}/" class="text-decoration-none text-dark">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">{{ poll.title }}</h5>
+            <p class="card-text"><small class="text-muted">Updated: {{ poll.updated_at }}</small></p>
+          </div>
+        </div>
+      </a>
+    </div>
   {% empty %}
     <p>No polls found.</p>
   {% endfor %}
