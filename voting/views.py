@@ -1,7 +1,7 @@
 from django.views import generic
 from .models import Poll, Option, Vote
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib.auth import login, authenticate
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.urls import reverse
 from django.db import IntegrityError
@@ -45,11 +45,20 @@ class PollDetailView(generic.DetailView):
             if count >= 10:
                 return HttpResponse('Too many requests', status=429)
             cache.set(key, count + 1, timeout=60)
+        # Prevent authenticated users from voting more than once per poll
+        if user is not None:
+            if Vote.objects.filter(user=user, option__poll=self.object).exists():
+                return HttpResponseForbidden('You already voted')
         try:
             Vote.objects.create(user=user, option=option, ip_address=ip)
         except IntegrityError:
             return HttpResponseForbidden('You already voted')
         return redirect(reverse('poll_detail', args=[self.object.id]))
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('poll_list')
 
 def register_view(request):
     if request.method == 'POST':
@@ -60,7 +69,7 @@ def register_view(request):
             return redirect('poll_list')
     else:
         form = UserCreationForm()
-    return generic.TemplateView.as_view(template_name='register.html')(request=request, extra_context={'form': form})
+    return render(request, 'register.html', {'form': form})
 
 def login_view(request):
     if request.method == 'POST':
@@ -71,4 +80,4 @@ def login_view(request):
             return redirect('poll_list')
     else:
         form = AuthenticationForm(request)
-    return generic.TemplateView.as_view(template_name='login.html')(request=request, extra_context={'form': form})
+    return render(request, 'login.html', {'form': form})
