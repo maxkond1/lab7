@@ -3,6 +3,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from django.shortcuts import render
 import openpyxl
+from django.http import HttpResponseBadRequest
 
 # Простая форма для выбора таблицы и полей для экспорта
 class ExportForm(forms.Form):
@@ -28,16 +29,21 @@ def export_xlsx(request):
         fields = [f.strip() for f in request.GET.get('fields', '').split(',') if f.strip()]
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.append(fields)
+        # Validate requested fields against model fields to avoid errors or data leakage
         if table == 'poll':
-            from .models import Poll
-            qs = Poll.objects.all().values_list(*fields)
+            from .models import Poll as Model
         elif table == 'option':
-            from .models import Option
-            qs = Option.objects.all().values_list(*fields)
+            from .models import Option as Model
         else:
-            from .models import Vote
-            qs = Vote.objects.all().values_list(*fields)
+            from .models import Vote as Model
+
+        allowed = [f.name for f in Model._meta.fields]
+        invalid = [f for f in fields if f not in allowed]
+        if invalid:
+            return HttpResponseBadRequest(f"Invalid fields requested: {', '.join(invalid)}")
+
+        ws.append(fields)
+        qs = Model.objects.all().values_list(*fields)
         for row in qs:
             ws.append(list(row))
         resp = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

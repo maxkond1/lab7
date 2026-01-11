@@ -30,6 +30,12 @@ class PollDetailView(generic.DetailView):
         option = get_object_or_404(Option, id=option_id, poll=self.object)
         user = request.user if request.user.is_authenticated else None
         ip = request.META.get('REMOTE_ADDR')
+        # Prevent duplicate votes:
+        # - for authenticated users, unique_together (user, option) triggers IntegrityError
+        # - for guests (user is None), prevent multiple votes from same IP for this poll
+        if user is None:
+            if ip and Vote.objects.filter(option__poll=self.object, ip_address=ip).exists():
+                return HttpResponseForbidden('Guest already voted from this IP')
         try:
             Vote.objects.create(user=user, option=option, ip_address=ip)
         except IntegrityError:

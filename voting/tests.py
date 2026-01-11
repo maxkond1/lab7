@@ -34,3 +34,24 @@ class AdminExportViewTests(TestCase):
         resp = self.client.get('/admin/export-xlsx/?table=poll&fields=title,description')
         # successful download or rendered form
         self.assertIn(resp.status_code, (200, 302))
+
+    def test_export_invalid_fields(self):
+        self.client.login(username='admin', password='adminpass')
+        resp = self.client.get('/admin/export-xlsx/?table=poll&fields=title,nonexistent')
+        self.assertEqual(resp.status_code, 400)
+
+
+class GuestVoteTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.poll = Poll.objects.create(title='G Poll')
+        self.opt = Option.objects.create(poll=self.poll, text='Opt')
+
+    def test_guest_cannot_vote_twice_from_same_ip(self):
+        url = f'/polls/{self.poll.id}/'
+        # first vote should succeed
+        resp1 = self.client.post(url, {'option': self.opt.id}, REMOTE_ADDR='127.0.0.1')
+        self.assertIn(resp1.status_code, (302, 301))
+        # second vote from same IP should be forbidden
+        resp2 = self.client.post(url, {'option': self.opt.id}, REMOTE_ADDR='127.0.0.1')
+        self.assertEqual(resp2.status_code, 403)

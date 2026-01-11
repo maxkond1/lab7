@@ -1,0 +1,49 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: polls_db
+          POSTGRES_USER: polls_user
+          POSTGRES_PASSWORD: polls_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U polls_user -d polls_db" --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Wait for Postgres
+      run: |
+        until pg_isready -h localhost -p 5432 -U polls_user; do sleep 1; done
+      env:
+        PGPASSWORD: polls_pass
+    - name: Run migrations and tests
+      env:
+        DB_NAME: polls_db
+        DB_USER: polls_user
+        DB_PASSWORD: polls_pass
+        DB_HOST: localhost
+        DB_PORT: 5432
+      run: |
+        python manage.py migrate --noinput
+        python manage.py test --verbosity=2
