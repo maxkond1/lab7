@@ -1,0 +1,59 @@
+from django.views import generic
+from .models import Poll, Option, Vote
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.urls import reverse
+from django.db import IntegrityError
+from django.http import HttpResponseForbidden
+
+class PollListView(generic.ListView):
+    model = Poll
+    template_name = 'poll_list.html'
+    context_object_name = 'polls'
+
+    def get_queryset(self):
+        qs = Poll.objects.filter(is_active=True).order_by('-created_at')
+        q = self.request.GET.get('q')
+        if q:
+            qs = qs.filter(title__icontains=q)
+        return qs
+
+class PollDetailView(generic.DetailView):
+    model = Poll
+    template_name = 'poll_detail.html'
+    context_object_name = 'poll'
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        option_id = request.POST.get('option')
+        option = get_object_or_404(Option, id=option_id, poll=self.object)
+        user = request.user if request.user.is_authenticated else None
+        ip = request.META.get('REMOTE_ADDR')
+        try:
+            Vote.objects.create(user=user, option=option, ip_address=ip)
+        except IntegrityError:
+            return HttpResponseForbidden('You already voted')
+        return redirect(reverse('poll_detail', args=[self.object.id]))
+
+def register_view(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('poll_list')
+    else:
+        form = UserCreationForm()
+    return generic.TemplateView.as_view(template_name='register.html')(request=request, extra_context={'form': form})
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('poll_list')
+    else:
+        form = AuthenticationForm(request)
+    return generic.TemplateView.as_view(template_name='login.html')(request=request, extra_context={'form': form})

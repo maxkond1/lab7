@@ -1,0 +1,8 @@
+Django>=4.0
+djangorestframework
+psycopg2-binary
+gunicorn
+openpyxl
+python-dotenv
+bootstrap4
+whitenoise
