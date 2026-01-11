@@ -37,7 +37,7 @@ class AdminExportViewTests(TestCase):
 
     def test_export_invalid_fields(self):
         self.client.login(username='admin', password='adminpass')
-        resp = self.client.get('/admin/export-xlsx/?table=poll&fields=title,nonexistent')
+        resp = self.client.get('/admin/export-xlsx/?action=download&table=poll&fields=title,nonexistent')
         self.assertEqual(resp.status_code, 400)
 
 
@@ -74,6 +74,8 @@ class APIViewsTests(TestCase):
         self.client = Client()
         self.poll = Poll.objects.create(title='API Poll', description='API')
         Option.objects.create(poll=self.poll, text='X')
+        # ensure admin user exists for export tests
+        get_user_model().objects.create_superuser('admin', 'a@b.com', 'adminpass')
 
     def test_poll_list_api(self):
         resp = self.client.get('/api/polls/')
