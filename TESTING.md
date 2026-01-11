@@ -66,4 +66,3 @@ docker-compose exec web python manage.py test
 - Экспорт XLSX: `voting/admin_views.py`
 - Автотесты: `tests/` и `voting/tests.py`
 
-Если нужно, могу дополнительно сгенерировать PDF‑чеклист для печати или отдельно оформить Issues в GitHub с пометкой `tested` для каждой строки чек‑листа.
