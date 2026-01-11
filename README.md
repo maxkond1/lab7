@@ -41,3 +41,19 @@ python manage.py createsuperuser
 ```powershell
 ./setup_venv.ps1
 ```
+
+Docker notes (static & media):
+
+- The `web` service runs `migrate` and `collectstatic` on start. Static files are collected to `staticfiles/` and served by WhiteNoise.
+- Media uploads are stored on the host in the `media/` folder (mounted into the container). Ensure `media/` exists and is writable.
+
+Start with Docker Compose:
+
+```bash
+docker-compose build
+docker-compose up -d
+docker-compose exec web python manage.py migrate
+docker-compose exec web python manage.py createsuperuser
+```
+
+After startup, open http://localhost:8000. Uploaded media will be available under `/media/`.
