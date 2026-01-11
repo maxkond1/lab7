@@ -57,3 +57,26 @@ docker-compose exec web python manage.py createsuperuser
 ```
 
 After startup, open http://localhost:8000. Uploaded media will be available under `/media/`.
+
+Demo data
+---------
+To create demo users and polls run (inside container):
+
+```bash
+docker-compose exec web python manage.py createdemo
+```
+
+Or locally in venv (ensure DB is reachable):
+
+```powershell
+#.venv\Scripts\Activate.ps1
+#DB_HOST=localhost
+python manage.py createdemo
+```
+
+Default demo credentials created by this command:
+
+- Admin: `admin` / `Secur3Pass!`
+- User: `user1` / `pass1234`
+
+Use these to log into the admin at `http://localhost:8000/admin` or to test registered-user voting.
