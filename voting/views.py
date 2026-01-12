@@ -7,7 +7,13 @@ from django.urls import reverse
 from django.db import IntegrityError
 from django.http import HttpResponseForbidden
 from django.core.cache import cache
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
+
+def custom_404_view(request: HttpRequest, exception) -> HttpResponse:
+    return render(request, "errors/404.html", status=404)
+
 
 class PollListView(generic.ListView):
     model = Poll

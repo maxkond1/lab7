@@ -17,7 +17,7 @@ class SecurityTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         content = resp.content.decode()
         # should return page without error; search input should be escaped in the HTML
-        self.assertIn('No polls found.', content)
+        self.assertIn('Опросов не найдено.', content)
         self.assertIn('&#x27; OR 1=1 -- ', content)
 
     def test_xss_escaped_in_templates(self):

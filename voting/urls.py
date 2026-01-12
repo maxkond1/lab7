@@ -1,5 +1,8 @@
 from django.urls import path
 from . import views
+from voting.views import custom_404_view
+
+handler404 = custom_404_view
 
 urlpatterns = [
     path('<int:pk>/', views.PollDetailView.as_view(), name='poll_detail'),
