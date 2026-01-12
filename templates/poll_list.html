@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Active Polls</h1>
+<h1>Активные опросы</h1>
 <form method="get" class="mb-3">
   <div class="input-group">
-    <input name="q" class="form-control" placeholder="Search polls..." value="{{ request.GET.q }}">
-    <button class="btn btn-outline-secondary" type="submit">Search</button>
+    <input name="q" class="form-control" placeholder="Поиск опросов..." value="{{ request.GET.q }}">
+    <button class="btn btn-outline-secondary" type="submit">Поиск</button>
   </div>
 </form>
 <div class="row g-3">
@@ -14,13 +14,13 @@
         <div class="card h-100">
           <div class="card-body">
             <h5 class="card-title">{{ poll.title }}</h5>
-            <p class="card-text"><small class="text-muted">Updated: {{ poll.updated_at }}</small></p>
+            <p class="card-text"><small class="text-muted">Обновлено: {{ poll.updated_at }}</small></p>
           </div>
         </div>
       </a>
     </div>
   {% empty %}
-    <p>No polls found.</p>
+    <p>Опросов не найдено.</p>
   {% endfor %}
 </div>
 {% endblock %}

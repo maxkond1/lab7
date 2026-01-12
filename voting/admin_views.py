@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 import openpyxl
 from django.http import HttpResponseBadRequest
+import datetime
 
 # Простая форма для выбора таблицы и полей для экспорта
 class ExportForm(forms.Form):
@@ -27,7 +28,10 @@ def export_xlsx(request):
     # If a table is selected and fields param provided (comma-separated), perform export
     if request.method == 'GET' and request.GET.get('action') == 'download':
         table = request.GET.get('table')
-        fields = [f.strip() for f in request.GET.get('fields', '').split(',') if f.strip()]
+        # Accept multiple checkbox values (GET list) or comma-separated single value
+        fields = request.GET.getlist('fields')
+        if len(fields) == 1 and ',' in fields[0]:
+            fields = [f.strip() for f in fields[0].split(',') if f.strip()]
         wb = openpyxl.Workbook()
         ws = wb.active
         # Resolve model by table parameter
@@ -46,7 +50,15 @@ def export_xlsx(request):
         ws.append(fields)
         qs = Model.objects.all().values_list(*fields)
         for row in qs:
-            ws.append(list(row))
+            processed = []
+            for val in row:
+                # openpyxl does not accept timezone-aware datetimes/times
+                if isinstance(val, datetime.datetime) and val.tzinfo is not None:
+                    val = val.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+                if isinstance(val, datetime.time) and val.tzinfo is not None:
+                    val = val.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+                processed.append(val)
+            ws.append(processed)
         resp = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         resp['Content-Disposition'] = 'attachment; filename=export.xlsx'
         wb.save(resp)

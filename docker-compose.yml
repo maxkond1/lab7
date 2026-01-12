@@ -2,10 +2,12 @@ version: '3.8'
 services:
   db:
     image: postgres:15
+    # Do not hardcode credentials in the compose file. Use environment
+    # variables (from a local .env which must not be committed) or CI secrets.
     environment:
-      - POSTGRES_DB=polls_db
-      - POSTGRES_USER=polls_user
-      - POSTGRES_PASSWORD=polls_pass
+      - POSTGRES_DB=${POSTGRES_DB:-polls_db}
+      - POSTGRES_USER=${POSTGRES_USER:-polls_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-polls_pass}
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:
